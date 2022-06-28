@@ -1,0 +1,27 @@
+version: '2'
+services:
+  rabbitmq:
+    image: rabbitmq:3.6.6
+    ports:
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=mypass
+  redis:
+    image: redis
+    ports:
+    - "6379:6379"
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ['celery', '-A', 'group_test', 'worker', '-l', 'info']
+    environment:
+      - BROKER_URL=amqp://admin:mypass@rabbitmq:5672//
+      - RESULT_BACKEND=redis://redis:6379/0
+      - C_FORCE_ROOT=true
+    volumes:
+      - ./:/app/
+    depends_on:
+      - rabbitmq
+      - redis
